@@ -9,7 +9,7 @@ export async function POST(request) {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1000,
       system:
         system ||
@@ -19,6 +19,7 @@ export async function POST(request) {
 
     return Response.json({ text: response.content[0].text });
   } catch (err) {
-    return Response.json({ text: "AI response unavailable right now." }, { status: 500 });
+    console.error("AI route error:", err?.message || err);
+    return Response.json({ text: "AI response unavailable right now.", _debug: err?.message }, { status: 500 });
   }
 }
