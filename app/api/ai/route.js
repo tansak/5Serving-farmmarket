@@ -6,7 +6,9 @@ export async function POST(request) {
   try {
     const { prompt, system } = await request.json();
 
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    // Strip BOM (﻿) and newlines that can be injected when env vars are set via stdin
+    const apiKey = (process.env.ANTHROPIC_API_KEY || "").replace(/﻿/g, "").replace(/\n/g, "").trim();
+    const anthropic = new Anthropic({ apiKey });
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
