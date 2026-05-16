@@ -6,18 +6,21 @@ import Community from "@/models/Community";
 // One-time seed endpoint — protected by secret
 export async function POST(request) {
   try {
-    const { secret } = await request.json();
-    if (secret !== process.env.SEED_SECRET && secret !== "5serving-seed-2026") {
+    const body = await request.json();
+    if (body.secret !== process.env.SEED_SECRET && body.secret !== "5serving-seed-2026") {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
 
-    // Only seed if empty
     const existingFarmers = await Farmer.countDocuments();
-    if (existingFarmers > 0) {
+    if (existingFarmers >= 4 && !body.force) {
       return Response.json({ message: "Already seeded", farmers: existingFarmers });
     }
+    // Clear and re-seed
+    await Farmer.deleteMany({});
+    await Produce.deleteMany({});
+    await Community.deleteMany({});
 
     const today = new Date().toISOString().slice(0, 10);
 
