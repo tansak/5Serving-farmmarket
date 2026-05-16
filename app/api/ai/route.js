@@ -21,7 +21,6 @@ export async function POST(request) {
 
     return Response.json({ text: response.content[0].text });
   } catch (err) {
-    console.error("AI route error:", err?.message || err);
-    return Response.json({ text: "AI response unavailable right now.", _debug: err?.message }, { status: 500 });
+    return Response.json({ text: "AI response unavailable right now." }, { status: 500 });
   }
 }
