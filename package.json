@@ -6,10 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "mongoose": "^9.6.2",
     "next": "16.2.6",
+    "razorpay": "^2.9.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -17,8 +22,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "sharp": "^0.34.5",
     "typescript": "^5"
   }
 }

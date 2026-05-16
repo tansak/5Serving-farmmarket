@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <circle cx="256" cy="256" r="256" fill="#1B4332"/>
+  <!-- Stem -->
+  <rect x="248" y="280" width="16" height="100" rx="8" fill="#ffffff"/>
+  <!-- Main leaf -->
+  <path d="M256 270 C256 270 180 200 190 130 C220 100 280 120 280 180 C290 230 256 270 256 270Z" fill="#ffffff"/>
+  <!-- Second leaf -->
+  <path d="M256 250 C256 250 310 195 340 155 C340 155 360 195 330 220 C305 240 256 250 256 250Z" fill="#D8F3DC"/>
+  <!-- Ground curve -->
+  <ellipse cx="256" cy="380" rx="60" ry="10" fill="rgba(255,255,255,0.3)"/>
+</svg>
