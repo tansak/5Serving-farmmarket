@@ -2,13 +2,10 @@
 import { useState } from "react";
 import { NavBar, Btn, FormGroup, Input, Select, Textarea, Badge, AIPanel } from "@/components/ui";
 import { authHeaders } from "@/lib/clientAuth";
+import { getProduceEmoji } from "@/lib/produceEmoji";
 
 const CATEGORIES = ["Vegetables", "Fruits", "Grains", "Pulses", "Dairy", "Herbs", "Spices", "Roots"];
 const UNITS = ["kg", "g", "litre", "dozen", "bundle", "bag", "piece"];
-const EMOJI_MAP = {
-  Vegetables: "🥦", Fruits: "🍎", Grains: "🌾", Pulses: "🫘",
-  Dairy: "🥛", Herbs: "🌿", Spices: "🌶️", Roots: "🥕"
-};
 
 export default function AddProduceScreen({ farmers, initialFarmerId, currentFarmer, onSave, onBack, showToast }) {
   const [form, setForm] = useState({
@@ -51,7 +48,7 @@ export default function AddProduceScreen({ farmers, initialFarmerId, currentFarm
         price: Number(form.price),
         farmerName: farmer?.name || "",
         village: `${farmer?.district || ""}, ${farmer?.state || ""}`,
-        emoji: EMOJI_MAP[form.category] || "🌱",
+        emoji: getProduceEmoji(form.name, form.category),
       };
       const res = await fetch("/api/produce", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error();
@@ -84,6 +81,13 @@ export default function AddProduceScreen({ farmers, initialFarmerId, currentFarm
         <FormGroup label="Produce Name *">
           <Input placeholder="e.g. Country Tomatoes" value={form.name} onChange={e => set("name", e.target.value)} />
         </FormGroup>
+
+        <div style={{
+          background: "var(--gs)", borderRadius: "var(--r-sm)", padding: "8px 12px",
+          fontSize: 12, color: "var(--brown)", marginBottom: 16, lineHeight: 1.5
+        }}>
+          📸 No photo needed — just pick a category below and we'll show a picture for your produce automatically.
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <FormGroup label="Category">
@@ -137,7 +141,7 @@ export default function AddProduceScreen({ farmers, initialFarmerId, currentFarm
                 background: form.organic ? "var(--gs)" : "var(--parch)",
                 border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 28
-              }}>{EMOJI_MAP[form.category] || "🌱"}</div>
+              }}>{getProduceEmoji(form.name, form.category)}</div>
               <div>
                 <div style={{ fontWeight: 700, color: "var(--brown)" }}>{form.name}</div>
                 <div style={{ display: "flex", gap: 6, marginTop: 4 }}>

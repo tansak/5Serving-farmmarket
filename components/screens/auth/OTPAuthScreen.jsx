@@ -7,6 +7,7 @@ const ROLE_META = {
   farmer:    { icon: "👨‍🌾", label: "Farmer",    color: "var(--gd)" },
   consumer:  { icon: "🛒", label: "Buyer",     color: "var(--terra)" },
   community: { icon: "🏘️", label: "Community", color: "var(--gold)" },
+  admin:     { icon: "⚙️", label: "Admin",     color: "var(--gd)" },
 };
 
 export default function OTPAuthScreen({ role, onVerified, onBack }) {

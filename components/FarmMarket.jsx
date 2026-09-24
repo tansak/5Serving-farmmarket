@@ -35,14 +35,8 @@ const SEED_PRODUCE = [
 ];
 
 export default function FarmMarket({ initialRole } = {}) {
-  const [screen, setScreen] = useState(() => {
-    if (initialRole === "admin") return "admin";
-    if (initialRole) return "otp-auth";
-    return "landing";
-  });
-  const [params, setParams] = useState(() =>
-    initialRole && initialRole !== "admin" ? { role: initialRole } : {}
-  );
+  const [screen, setScreen] = useState(() => initialRole ? "otp-auth" : "landing");
+  const [params, setParams] = useState(() => initialRole ? { role: initialRole } : {});
   const [role, setRole] = useState(initialRole || "");
   const [farmer, setFarmer] = useState(null);
   const [buyer, setBuyer] = useState(null);
@@ -79,6 +73,18 @@ export default function FarmMarket({ initialRole } = {}) {
       nav("consumer-home");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Cart persistence across refreshes ─── */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("5sf_cart");
+      if (saved) setCart(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem("5sf_cart", JSON.stringify(cart)); } catch {}
+  }, [cart]);
 
   /* ─── Navigation ─── */
   const nav = (screenKey, paramsObj = {}) => {
@@ -223,9 +229,9 @@ export default function FarmMarket({ initialRole } = {}) {
           <AddProduceScreen
             farmers={farmers}
             initialFarmerId={params.farmerId || farmer?._id || farmer?.id}
-            currentFarmer={farmer}
-            onSave={() => { refreshProduce(); nav("farmer-home"); }}
-            onBack={() => nav("farmer-home")}
+            currentFarmer={role === "admin" ? null : farmer}
+            onSave={() => { refreshProduce(); nav(role === "admin" ? "admin" : "farmer-home"); }}
+            onBack={() => nav(role === "admin" ? "admin" : "farmer-home")}
             showToast={showToast}
           />
         );

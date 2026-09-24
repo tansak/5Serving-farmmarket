@@ -411,6 +411,9 @@ export default function AdminScreen({ onNav, onAddFarmer, showToast }) {
           {/* ── Produce ── */}
           {tab === "Produce" && (
             <>
+              <Btn block onClick={() => onNav("add-produce", {})} style={{ marginBottom: 16 }}>
+                ➕ Add Produce for a Farmer
+              </Btn>
               {data.produce.length === 0 && (
                 <div style={{ textAlign: "center", padding: 48, color: "var(--muted)" }}>No produce listed yet</div>
               )}
