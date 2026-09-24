@@ -26,11 +26,12 @@ const PAYMENT_OPTIONS = [
   },
 ];
 
-export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast }) {
-  const [form, setForm] = useState({ name: "", phone: "", address: "", community: "", notes: "" });
+export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast, buyerPhone }) {
+  const [form, setForm] = useState({ name: "", phone: buyerPhone || "", address: "", community: "", notes: "" });
   const [payment, setPayment] = useState("razorpay");
   const [communities, setCommunities] = useState([]);
   const [placing, setPlacing] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(!!buyerPhone);
 
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const totalPaise = Math.round(total * 100);
@@ -39,7 +40,36 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
     fetch("/api/communities").then(r => r.json()).then(d => Array.isArray(d) && setCommunities(d)).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!buyerPhone) return;
+    setProfileLoading(true);
+    fetch(`/api/buyers?phone=${buyerPhone}`)
+      .then(r => r.json())
+      .then(profile => {
+        if (profile?.name) {
+          setForm(f => ({
+            ...f,
+            phone: buyerPhone,
+            name: profile.name || f.name,
+            address: profile.address || f.address,
+            community: profile.community || f.community,
+          }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setProfileLoading(false));
+  }, [buyerPhone]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const saveBuyerProfile = () => {
+    if (!form.phone) return;
+    fetch("/api/buyers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: form.phone, name: form.name, address: form.address, community: form.community }),
+    }).catch(() => {});
+  };
 
   const loadRazorpay = () => new Promise(resolve => {
     if (window.Razorpay) { resolve(true); return; }
@@ -69,6 +99,7 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
           items: cart.map(i => ({
             produceId: i._id || i.id,
             produceName: i.name,
+            farmerId: i.farmerId,
             farmerName: i.farmerName,
             emoji: i.emoji,
             qty: i.qty,
@@ -122,6 +153,7 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
                 });
                 const vData = await verifyRes.json();
                 if (vData.success) {
+                  saveBuyerProfile();
                   resolve();
                   onOrderPlaced({ ...order, paymentMethod: "razorpay", paymentStatus: "paid" });
                 } else {
@@ -142,6 +174,7 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId: order._id })
         });
+        saveBuyerProfile();
         onOrderPlaced({ ...order, paymentMethod: "cod", paymentStatus: "pending" });
 
       } else {
@@ -151,6 +184,7 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ paymentMethod: "upi", paymentStatus: "pending" })
         });
+        saveBuyerProfile();
         onOrderPlaced({ ...order, paymentMethod: "upi", paymentStatus: "pending" });
       }
     } catch (err) {
@@ -173,6 +207,18 @@ export default function CheckoutScreen({ cart, onBack, onOrderPlaced, showToast 
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "var(--brown)", marginBottom: 16 }}>
             1. Your Details
           </h2>
+
+          {profileLoading && (
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>Loading your saved details…</div>
+          )}
+          {!profileLoading && buyerPhone && form.name && (
+            <div style={{
+              background: "var(--gs)", borderRadius: "var(--r-sm)", padding: "8px 12px",
+              fontSize: 12, color: "var(--gd)", fontWeight: 600, marginBottom: 12
+            }}>
+              ✓ Details loaded from your profile — update if needed
+            </div>
+          )}
 
           <FormGroup label="Full Name *">
             <Input placeholder="Your name" value={form.name} onChange={e => set("name", e.target.value)} />

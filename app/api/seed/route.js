@@ -7,7 +7,8 @@ import Community from "@/models/Community";
 export async function POST(request) {
   try {
     const body = await request.json();
-    if (body.secret !== process.env.SEED_SECRET && body.secret !== "5serving-seed-2026") {
+    const seedSecret = (process.env.SEED_SECRET || "").replace(/﻿/g, "").replace(/\n/g, "").trim();
+    if (!seedSecret || body.secret !== seedSecret) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -25,10 +26,10 @@ export async function POST(request) {
     const today = new Date().toISOString().slice(0, 10);
 
     const farmers = await Farmer.insertMany([
-      { name: "Ramu Gowda",      village: "Channarayapatna", district: "Hassan",     state: "Karnataka",   phone: "9876543210", crops: ["Vegetables", "Grains"] },
-      { name: "Savita Devi",     village: "Wai",             district: "Satara",     state: "Maharashtra", phone: "9823456701", crops: ["Fruits", "Pulses"] },
-      { name: "Krishnamurthy R", village: "Ponneri",         district: "Tiruvallur", state: "Tamil Nadu",  phone: "9765432108", crops: ["Herbs", "Spices"] },
-      { name: "Meena Patil",     village: "Hubli",           district: "Dharwad",    state: "Karnataka",   phone: "9741236580", crops: ["Dairy", "Vegetables"] },
+      { name: "Ramu Gowda",      village: "Channarayapatna", district: "Hassan",     state: "Karnataka",   phone: "9876543210", crops: ["Vegetables", "Grains"], status: "approved" },
+      { name: "Savita Devi",     village: "Wai",             district: "Satara",     state: "Maharashtra", phone: "9823456701", crops: ["Fruits", "Pulses"],      status: "approved" },
+      { name: "Krishnamurthy R", village: "Ponneri",         district: "Tiruvallur", state: "Tamil Nadu",  phone: "9765432108", crops: ["Herbs", "Spices"],       status: "approved" },
+      { name: "Meena Patil",     village: "Hubli",           district: "Dharwad",    state: "Karnataka",   phone: "9741236580", crops: ["Dairy", "Vegetables"],   status: "approved" },
     ]);
 
     await Produce.insertMany([

@@ -2,17 +2,22 @@
 import { useState, useEffect } from "react";
 
 import LandingScreen from "@/components/screens/LandingScreen";
+import OTPAuthScreen from "@/components/screens/auth/OTPAuthScreen";
 import FarmerHome from "@/components/screens/farmer/FarmerHome";
 import AddProduceScreen from "@/components/screens/farmer/AddProduceScreen";
 import AddFarmerScreen from "@/components/screens/farmer/AddFarmerScreen";
 import FarmerProduceDetail from "@/components/screens/farmer/FarmerProduceDetail";
+import FarmerOrders from "@/components/screens/farmer/FarmerOrders";
 import ConsumerHome from "@/components/screens/consumer/ConsumerHome";
 import ProductDetail from "@/components/screens/consumer/ProductDetail";
 import CartScreen from "@/components/screens/consumer/CartScreen";
 import CheckoutScreen from "@/components/screens/consumer/CheckoutScreen";
+import BuyerOrders from "@/components/screens/consumer/BuyerOrders";
 import OrderSuccessScreen from "@/components/screens/OrderSuccessScreen";
 import AdminScreen from "@/components/screens/admin/AdminScreen";
 import { BottomTabBar, Toast } from "@/components/ui";
+import ReportIssueScreen from "@/components/screens/ReportIssueScreen";
+import { decodeSessionToken, clearSessionToken } from "@/lib/clientAuth";
 
 /* ─── Seed data (fallback when MongoDB is unavailable) ─── */
 const SEED_FARMERS = [
@@ -29,10 +34,18 @@ const SEED_PRODUCE = [
   { _id: "p6", id: "p6", farmerId: "f3", farmerName: "Krishnamurthy R",village: "Tiruvallur, Tamil Nadu", name: "Red Chilli Powder", category: "Spices",     quantity: 30,  unit: "kg",    price: 160, organic: true,  emoji: "🌶️",available: true, harvestDate: new Date().toISOString().slice(0,10), description: "Fiery red chilli powder, naturally dried." },
 ];
 
-export default function FarmMarket() {
-  const [screen, setScreen] = useState("landing");
-  const [params, setParams] = useState({});
-  const [role, setRole] = useState("");
+export default function FarmMarket({ initialRole } = {}) {
+  const [screen, setScreen] = useState(() => {
+    if (initialRole === "admin") return "admin";
+    if (initialRole) return "otp-auth";
+    return "landing";
+  });
+  const [params, setParams] = useState(() =>
+    initialRole && initialRole !== "admin" ? { role: initialRole } : {}
+  );
+  const [role, setRole] = useState(initialRole || "");
+  const [farmer, setFarmer] = useState(null);
+  const [buyer, setBuyer] = useState(null);
   const [cart, setCart] = useState([]);
   const [toast, setToast] = useState({ message: "", type: "success" });
   const [farmers, setFarmers] = useState(SEED_FARMERS);
@@ -45,6 +58,27 @@ export default function FarmMarket() {
     fetch("/api/produce").then(r => r.json()).then(d => { if (Array.isArray(d) && d.length) setProduce(d); }).catch(() => {});
     fetch("/api/communities").then(r => r.json()).then(d => { if (Array.isArray(d)) setCommunities(d); }).catch(() => {});
   }, []);
+
+  /* ─── Session restore on page refresh ─── */
+  useEffect(() => {
+    const payload = decodeSessionToken();
+    if (!payload) return;
+    setRole(payload.role);
+    if (payload.role === "admin") {
+      nav("admin");
+    } else if (payload.role === "farmer" && payload.farmerId) {
+      fetch(`/api/farmers/${payload.farmerId}`)
+        .then(r => r.json())
+        .then(f => {
+          if (f && !f.error) { setFarmer(f); refreshFarmers(); nav("farmer-home"); }
+          else clearSessionToken();
+        })
+        .catch(() => clearSessionToken());
+    } else if (payload.phone) {
+      setBuyer({ phone: payload.phone });
+      nav("consumer-home");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Navigation ─── */
   const nav = (screenKey, paramsObj = {}) => {
@@ -61,9 +95,7 @@ export default function FarmMarket() {
   /* ─── Role handler ─── */
   const handleRole = (r) => {
     setRole(r);
-    if (r === "farmer")    nav("farmer-home");
-    else if (r === "consumer" || r === "community") nav("consumer-home");
-    else if (r === "admin") nav("admin");
+    nav("otp-auth", { role: r });
   };
 
   /* ─── Cart operations ─── */
@@ -81,7 +113,7 @@ export default function FarmMarket() {
     else setCart(c => c.map(ci => (ci._id || ci.id) === produceId ? { ...ci, qty } : ci));
   };
   const clearCart = () => setCart([]);
-  const cartCount = cart.reduce((s, i) => s + (i.qty || 1), 0);
+  const cartCount = cart.length;
   const cartTotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
 
   /* ─── Data refresh helpers ─── */
@@ -94,13 +126,15 @@ export default function FarmMarket() {
 
   /* ─── Tab bars ─── */
   const farmerTabs = [
-    { id: "farmer-home",  icon: "🌾", label: "My Farm" },
-    { id: "add-produce",  icon: "➕", label: "Add Produce" },
-    { id: "landing",      icon: "🔄", label: "Switch" },
+    { id: "farmer-home",   icon: "🌾", label: "My Farm" },
+    { id: "add-produce",   icon: "➕", label: "Add Produce" },
+    { id: "farmer-orders", icon: "📦", label: "Orders" },
+    { id: "landing",       icon: "🔄", label: "Switch" },
   ];
   const consumerTabs = [
     { id: "consumer-home", icon: "🏪", label: "Market" },
     { id: "cart",          icon: "🛒", label: "Cart", badge: cartCount },
+    { id: "buyer-orders",  icon: "📦", label: "My Orders" },
     { id: "landing",       icon: "🔄", label: "Switch" },
   ];
   const adminTabs = [
@@ -111,8 +145,9 @@ export default function FarmMarket() {
   const tabs = role === "farmer" ? farmerTabs : role === "admin" ? adminTabs : consumerTabs;
 
   const handleTabSwitch = (tabId) => {
-    if (tabId === "landing") { setRole(""); nav("landing"); }
-    else nav(tabId, tabId === "add-produce" ? { farmerId: farmers[0]?._id } : {});
+    if (tabId === "landing") { setRole(""); setFarmer(null); setBuyer(null); clearSessionToken(); nav("landing"); }
+    else if (tabId === "add-produce") nav(tabId, { farmerId: farmer?._id || farmer?.id || farmers[0]?._id });
+    else nav(tabId);
   };
 
   /* ─── Screen renderer ─── */
@@ -121,20 +156,74 @@ export default function FarmMarket() {
       case "landing":
         return <LandingScreen onRole={handleRole} />;
 
+      case "otp-auth":
+        return (
+          <OTPAuthScreen
+            role={params.role}
+            onVerified={({ phone, farmer: f, isNewUser }) => {
+              if (params.role === "admin") {
+                setRole("admin");
+                nav("admin");
+              } else if (params.role === "farmer") {
+                if (isNewUser) {
+                  nav("add-farmer", { prefillPhone: phone, backTo: "landing" });
+                } else if (f?.status === "pending") {
+                  nav("farmer-pending", { farmer: f });
+                } else {
+                  setFarmer(f);
+                  refreshFarmers();
+                  nav("farmer-home");
+                }
+              } else {
+                setBuyer({ phone });
+                nav("consumer-home");
+              }
+            }}
+            onBack={() => nav("landing")}
+          />
+        );
+
       case "farmer-home":
         return (
           <FarmerHome
             farmers={farmers}
             produce={produce}
+            currentFarmer={farmer}
             onNav={(s, p) => { if (s === "add-farmer") nav("add-farmer", p); else nav(s, p); }}
           />
+        );
+
+      case "farmer-pending":
+        return (
+          <div style={{ minHeight: "100vh", background: "var(--cream)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>⏳</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", color: "var(--brown)", fontSize: 24, marginBottom: 12 }}>
+              Approval Pending
+            </h2>
+            <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.7, maxWidth: 280, marginBottom: 24 }}>
+              Welcome back, {params.farmer?.name}! Your account is still under review. Our admin team will approve it within 24 hours.
+            </p>
+            <div style={{ background: "var(--gs)", borderRadius: "var(--r)", padding: "14px 20px", marginBottom: 24, width: "100%" }}>
+              <div style={{ fontWeight: 700, color: "var(--gd)", marginBottom: 4 }}>What happens next?</div>
+              <div style={{ fontSize: 13, color: "var(--brown)", lineHeight: 1.7 }}>
+                📞 Admin will verify your details<br />
+                ✅ Account approved within 24 hours<br />
+                🌾 Start listing your produce
+              </div>
+            </div>
+            <button
+              onClick={() => { setRole(""); nav("landing"); }}
+              style={{ background: "var(--gd)", color: "#fff", border: "none", borderRadius: 30, padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito', sans-serif", width: "100%" }}
+            >Back to Home</button>
+          </div>
         );
 
       case "add-produce":
         return (
           <AddProduceScreen
             farmers={farmers}
-            initialFarmerId={params.farmerId}
+            initialFarmerId={params.farmerId || farmer?._id || farmer?.id}
+            currentFarmer={farmer}
             onSave={() => { refreshProduce(); nav("farmer-home"); }}
             onBack={() => nav("farmer-home")}
             showToast={showToast}
@@ -144,9 +233,10 @@ export default function FarmMarket() {
       case "add-farmer":
         return (
           <AddFarmerScreen
-            onSave={(farmer) => { refreshFarmers(); nav("farmer-home"); }}
-            onBack={() => nav("farmer-home")}
+            onSave={() => { refreshFarmers(); nav("farmer-home"); }}
+            onBack={() => nav(params.backTo || "farmer-home")}
             showToast={showToast}
+            prefillPhone={params.prefillPhone}
           />
         );
 
@@ -156,6 +246,15 @@ export default function FarmMarket() {
             produce={params.produce}
             onBack={() => nav("farmer-home")}
             onUpdate={(updated) => setProduce(ps => ps.map(p => (p._id || p.id) === (updated._id || updated.id) ? updated : p))}
+            showToast={showToast}
+          />
+        );
+
+      case "farmer-orders":
+        return (
+          <FarmerOrders
+            farmer={farmer}
+            onBack={() => nav("farmer-home")}
             showToast={showToast}
           />
         );
@@ -198,6 +297,16 @@ export default function FarmMarket() {
             onBack={() => nav("cart")}
             onOrderPlaced={(order) => { clearCart(); nav("order-success", { order, paymentMethod: order.paymentMethod }); }}
             showToast={showToast}
+            buyerPhone={buyer?.phone}
+          />
+        );
+
+      case "buyer-orders":
+        return (
+          <BuyerOrders
+            buyer={buyer}
+            onBack={() => nav("consumer-home")}
+            showToast={showToast}
           />
         );
 
@@ -215,6 +324,17 @@ export default function FarmMarket() {
           <AdminScreen
             onNav={nav}
             onAddFarmer={() => nav("add-farmer", {})}
+            showToast={showToast}
+          />
+        );
+
+      case "report-issue":
+        return (
+          <ReportIssueScreen
+            role={role}
+            phone={farmer?.phone || buyer?.phone || ""}
+            onBack={() => nav(params.backTo || "landing")}
+            showToast={showToast}
           />
         );
 
@@ -223,7 +343,8 @@ export default function FarmMarket() {
     }
   };
 
-  const showBottomBar = role && screen !== "landing" && screen !== "order-success" && screen !== "checkout";
+  const showBottomBar = role && !["landing", "otp-auth", "farmer-pending", "order-success", "checkout"].includes(screen);
+  const showReportBtn = role && !["landing", "otp-auth", "report-issue", "order-success", "checkout"].includes(screen);
 
   return (
     <div className="app-shell" style={{
@@ -233,6 +354,34 @@ export default function FarmMarket() {
       {renderScreen()}
       {showBottomBar && (
         <BottomTabBar tabs={tabs} activeTab={screen} onTab={handleTabSwitch} />
+      )}
+      {showReportBtn && (
+        <button
+          onClick={() => nav("report-issue", { backTo: screen })}
+          title="Report an issue"
+          style={{
+            position: "fixed",
+            bottom: showBottomBar ? 76 : 20,
+            right: 16,
+            background: "var(--gd)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 30,
+            padding: "8px 14px",
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: "'Nunito', sans-serif",
+            cursor: "pointer",
+            boxShadow: "0 2px 12px rgba(27,67,50,.35)",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            zIndex: 90,
+            opacity: 0.9,
+          }}
+        >
+          📢 <span>Report</span>
+        </button>
       )}
       <Toast message={toast.message} type={toast.type} />
     </div>

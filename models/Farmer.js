@@ -10,6 +10,8 @@ const FarmerSchema = new mongoose.Schema(
     crops:    [String],
     joined:   { type: String, default: () => new Date().toISOString().slice(0, 10) },
     active:   { type: Boolean, default: true },
+    status:   { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    rejectionReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

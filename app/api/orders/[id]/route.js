@@ -1,9 +1,10 @@
 import connectDB from "@/lib/mongoose";
 import Order from "@/models/Order";
 
-export async function GET(request, { params }) {
+export async function GET(request, { params: rawParams }) {
   try {
     await connectDB();
+    const params = await rawParams;
     const order = await Order.findById(params.id);
     if (!order) return Response.json({ error: "Order not found" }, { status: 404 });
     return Response.json(order);
@@ -12,9 +13,10 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, { params: rawParams }) {
   try {
     await connectDB();
+    const params = await rawParams;
     const body = await request.json();
     const allowed = {};
     if (body.orderStatus) allowed.orderStatus = body.orderStatus;

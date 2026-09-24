@@ -7,34 +7,40 @@ const CATEGORY_EMOJI = {
   Dairy: "🥛", Herbs: "🌿", Spices: "🌶️", Roots: "🥕"
 };
 
-export default function FarmerHome({ farmers, produce, onNav }) {
-  const [selectedFarmerId, setSelectedFarmerId] = useState(farmers[0]?._id || "");
+export default function FarmerHome({ farmers, produce, currentFarmer, onNav }) {
+  const [selectedFarmerId, setSelectedFarmerId] = useState(
+    currentFarmer?._id || farmers[0]?._id || ""
+  );
 
-  const selectedFarmer = farmers.find(f => f._id === selectedFarmerId || f.id === selectedFarmerId);
-  const myProduce = produce.filter(p => p.farmerId === selectedFarmerId || p.farmerId === (selectedFarmer?._id));
+  // If logged in as a specific farmer, always lock to them
+  const activeFarmerId = currentFarmer?._id || selectedFarmerId;
+  const selectedFarmer = currentFarmer || farmers.find(f => f._id === activeFarmerId || f.id === activeFarmerId);
+  const myProduce = produce.filter(p => p.farmerId === activeFarmerId || p.farmerId === selectedFarmer?._id);
 
   return (
     <div style={{ paddingBottom: 80 }}>
       <NavBar title="Farmer Portal" sub="5serving FarmMarket" />
 
       <div style={{ padding: "16px 16px 0" }}>
-        {/* Farmer selector */}
-        <select
-          value={selectedFarmerId}
-          onChange={e => setSelectedFarmerId(e.target.value)}
-          style={{
-            width: "100%", padding: "10px 14px", borderRadius: "var(--r-sm)",
-            border: "1.5px solid var(--border)", background: "#fff", fontSize: 14,
-            fontFamily: "'Nunito', sans-serif", marginBottom: 16
-          }}
-        >
-          <option value="">Select Farmer…</option>
-          {farmers.map(f => (
-            <option key={f._id || f.id} value={f._id || f.id}>
-              {f.name} — {f.village}
-            </option>
-          ))}
-        </select>
+        {/* Farmer selector — only shown when no specific farmer is logged in (admin view) */}
+        {!currentFarmer && (
+          <select
+            value={selectedFarmerId}
+            onChange={e => setSelectedFarmerId(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px", borderRadius: "var(--r-sm)",
+              border: "1.5px solid var(--border)", background: "#fff", fontSize: 14,
+              fontFamily: "'Nunito', sans-serif", marginBottom: 16
+            }}
+          >
+            <option value="">Select Farmer…</option>
+            {farmers.map(f => (
+              <option key={f._id || f.id} value={f._id || f.id}>
+                {f.name} — {f.village}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* Farmer info card */}
         {selectedFarmer && (

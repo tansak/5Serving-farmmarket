@@ -38,19 +38,25 @@ export default function CartScreen({ cart, onBack, onRemoveItem, onUpdateQty, on
                     </div>
 
                     {/* Qty stepper */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <button onClick={() => onUpdateQty(itemId, item.qty - 1)} style={{
-                        width: 28, height: 28, borderRadius: "50%", background: "var(--parch)",
-                        border: "1px solid var(--border)", cursor: "pointer", fontWeight: 700, fontSize: 16,
-                        display: "flex", alignItems: "center", justifyContent: "center"
-                      }}>−</button>
-                      <span style={{ fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.qty}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <button
+                        onClick={() => onUpdateQty(itemId, Math.max(1, item.qty - 1))}
+                        disabled={item.qty <= 1}
+                        style={{
+                          width: 36, height: 36, borderRadius: "50%", background: "var(--parch)",
+                          border: "1.5px solid var(--border)", cursor: item.qty <= 1 ? "default" : "pointer",
+                          fontWeight: 700, fontSize: 18,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          opacity: item.qty <= 1 ? 0.3 : 1, transition: "opacity .15s"
+                        }}
+                      >−</button>
+                      <span style={{ fontWeight: 700, fontSize: 16, minWidth: 24, textAlign: "center" }}>{item.qty}</span>
                       <button onClick={() => onUpdateQty(itemId, item.qty + 1)} style={{
-                        width: 28, height: 28, borderRadius: "50%", background: "var(--gs)",
-                        border: "1px solid var(--gl)", cursor: "pointer", fontWeight: 700, fontSize: 16, color: "var(--gd)",
+                        width: 36, height: 36, borderRadius: "50%", background: "var(--gs)",
+                        border: "1.5px solid var(--gl)", cursor: "pointer", fontWeight: 700, fontSize: 18, color: "var(--gd)",
                         display: "flex", alignItems: "center", justifyContent: "center"
                       }}>+</button>
-                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{item.unit}</span>
+                      <span style={{ fontSize: 13, color: "var(--muted)" }}>{item.unit}</span>
                     </div>
                   </div>
 

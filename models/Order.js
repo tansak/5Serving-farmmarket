@@ -12,6 +12,7 @@ const OrderSchema = new mongoose.Schema(
         produceId:   String,
         produceName: String,
         farmerName:  String,
+        farmerId:    String,
         emoji:       String,
         qty:         Number,
         unit:        String,

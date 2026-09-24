@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { NavBar, Btn, FormGroup, Input, Select, Textarea, Badge, AIPanel } from "@/components/ui";
+import { authHeaders } from "@/lib/clientAuth";
 
 const CATEGORIES = ["Vegetables", "Fruits", "Grains", "Pulses", "Dairy", "Herbs", "Spices", "Roots"];
 const UNITS = ["kg", "g", "litre", "dozen", "bundle", "bag", "piece"];
@@ -9,9 +10,9 @@ const EMOJI_MAP = {
   Dairy: "🥛", Herbs: "🌿", Spices: "🌶️", Roots: "🥕"
 };
 
-export default function AddProduceScreen({ farmers, initialFarmerId, onSave, onBack, showToast }) {
+export default function AddProduceScreen({ farmers, initialFarmerId, currentFarmer, onSave, onBack, showToast }) {
   const [form, setForm] = useState({
-    farmerId: initialFarmerId || farmers[0]?._id || "",
+    farmerId: currentFarmer?._id || initialFarmerId || farmers[0]?._id || "",
     name: "", category: "Vegetables", unit: "kg",
     quantity: "", price: "", harvestDate: "", organic: false, description: ""
   });
@@ -52,7 +53,7 @@ export default function AddProduceScreen({ farmers, initialFarmerId, onSave, onB
         village: `${farmer?.district || ""}, ${farmer?.state || ""}`,
         emoji: EMOJI_MAP[form.category] || "🌱",
       };
-      const res = await fetch("/api/produce", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const res = await fetch("/api/produce", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error();
       showToast?.("✓ Produce listed!");
       onSave?.();
@@ -69,8 +70,8 @@ export default function AddProduceScreen({ farmers, initialFarmerId, onSave, onB
 
       <div style={{ padding: 16 }}>
 
-        {/* Farmer selector */}
-        {farmers.length > 1 && (
+        {/* Farmer selector — hidden when a specific farmer is logged in */}
+        {!currentFarmer && farmers.length > 1 && (
           <FormGroup label="Farmer">
             <Select value={form.farmerId} onChange={e => set("farmerId", e.target.value)}>
               {farmers.map(f => (

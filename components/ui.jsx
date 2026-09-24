@@ -7,18 +7,18 @@ export function NavBar({ title, sub, onBack, right }) {
     <div style={{
       position: "sticky", top: 0, zIndex: 100,
       background: "var(--gd)", color: "#fff",
-      padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+      padding: "14px 16px", display: "flex", alignItems: "center", gap: 10,
       boxShadow: "0 2px 8px rgba(0,0,0,.18)"
     }}>
       {onBack && (
         <button onClick={onBack} style={{
           background: "rgba(255,255,255,.15)", border: "none", color: "#fff",
-          borderRadius: 8, padding: "4px 10px", fontSize: 18, cursor: "pointer", lineHeight: 1
+          borderRadius: 8, padding: "8px 14px", fontSize: 20, cursor: "pointer", lineHeight: 1
         }}>←</button>
       )}
       <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{title}</div>
-        {sub && <div style={{ fontSize: 11, opacity: 0.75, marginTop: 1 }}>{sub}</div>}
+        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 19, lineHeight: 1.2 }}>{title}</div>
+        {sub && <div style={{ fontSize: 13, opacity: 0.8, marginTop: 2 }}>{sub}</div>}
       </div>
       {right && <div>{right}</div>}
     </div>
@@ -36,13 +36,13 @@ export function BottomTabBar({ tabs, activeTab, onTab }) {
     }}>
       {tabs.map(tab => (
         <button key={tab.id} onClick={() => onTab(tab.id)} style={{
-          flex: 1, padding: "8px 4px 6px", background: "none", border: "none",
-          cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+          flex: 1, padding: "10px 4px 8px", background: "none", border: "none",
+          cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
           color: activeTab === tab.id ? "var(--gd)" : "var(--muted)",
-          fontFamily: "'Nunito', sans-serif", fontSize: 10, fontWeight: 600,
+          fontFamily: "'Nunito', sans-serif", fontSize: 11, fontWeight: 700,
           transition: "color .2s", position: "relative"
         }}>
-          <span style={{ fontSize: 20, lineHeight: 1, position: "relative" }}>
+          <span style={{ fontSize: 24, lineHeight: 1, position: "relative" }}>
             {tab.icon}
             {tab.badge > 0 && (
               <span style={{
@@ -70,9 +70,9 @@ const btnStyles = {
   ghost:   { background: "transparent", color: "var(--muted)" },
 };
 const sizeStyles = {
-  sm: { padding: "6px 14px", fontSize: 13 },
-  md: { padding: "10px 22px", fontSize: 14 },
-  lg: { padding: "14px 28px", fontSize: 16 },
+  sm: { padding: "8px 16px",  fontSize: 14 },
+  md: { padding: "13px 24px", fontSize: 15 },
+  lg: { padding: "15px 30px", fontSize: 17 },
 };
 
 export function Btn({ variant = "primary", size = "md", block, onClick, disabled, loading, children, style }) {
@@ -131,7 +131,7 @@ export function Badge({ variant = "green", children, style }) {
   return (
     <span style={{
       ...badgeColors[variant],
-      padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+      padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
       display: "inline-block", ...style
     }}>
       {children}
@@ -156,8 +156,8 @@ export function FormGroup({ label, children, hint }) {
 
 /* ─── Input ──────────────────────────────────────────────── */
 const inputBase = {
-  width: "100%", padding: "10px 14px", borderRadius: "var(--r-sm)",
-  border: "1.5px solid var(--border)", background: "#fff", fontSize: 14,
+  width: "100%", padding: "13px 16px", borderRadius: "var(--r-sm)",
+  border: "1.5px solid var(--border)", background: "#fff", fontSize: 16,
   color: "var(--ink)", fontFamily: "'Nunito', sans-serif",
   transition: "border-color .2s"
 };
@@ -203,10 +203,10 @@ export function Toast({ message, type = "success" }) {
   if (!message) return null;
   return (
     <div style={{
-      position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
+      position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)",
       background: type === "success" ? "var(--gd)" : "var(--terra)",
-      color: "#fff", padding: "12px 24px", borderRadius: 30,
-      fontWeight: 600, fontSize: 14, zIndex: 9999,
+      color: "#fff", padding: "14px 28px", borderRadius: 30,
+      fontWeight: 700, fontSize: 15, zIndex: 9999,
       boxShadow: "var(--shadow-lg)", whiteSpace: "nowrap",
       animation: "fadeInOut .3s ease"
     }}>
@@ -219,9 +219,9 @@ export function Toast({ message, type = "success" }) {
 export function EmptyState({ icon = "📭", title, sub, action, actionLabel }) {
   return (
     <div style={{ textAlign: "center", padding: "48px 24px" }}>
-      <div style={{ fontSize: 56, marginBottom: 16 }}>{icon}</div>
-      <h3 style={{ fontFamily: "'Playfair Display', serif", color: "var(--brown)", marginBottom: 8 }}>{title}</h3>
-      {sub && <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 20 }}>{sub}</p>}
+      <div style={{ fontSize: 64, marginBottom: 16 }}>{icon}</div>
+      <h3 style={{ fontFamily: "'Playfair Display', serif", color: "var(--brown)", marginBottom: 8, fontSize: 22 }}>{title}</h3>
+      {sub && <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 20 }}>{sub}</p>}
       {action && <Btn onClick={action}>{actionLabel}</Btn>}
     </div>
   );
@@ -249,14 +249,14 @@ export function AIPanel({ title, body }) {
     <div style={{
       background: "linear-gradient(135deg, var(--gs), #fff)",
       border: "1.5px solid var(--gl)", borderRadius: "var(--r)",
-      padding: "14px 16px"
+      padding: "16px 18px"
     }}>
       {title && (
-        <div style={{ fontWeight: 700, color: "var(--gd)", fontSize: 13, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ fontWeight: 700, color: "var(--gd)", fontSize: 15, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
           🤖 {title}
         </div>
       )}
-      <p style={{ color: "var(--brown)", fontSize: 14, lineHeight: 1.6 }}>{body}</p>
+      <p style={{ color: "var(--brown)", fontSize: 15, lineHeight: 1.7 }}>{body}</p>
     </div>
   );
 }

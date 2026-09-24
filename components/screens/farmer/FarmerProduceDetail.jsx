@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { NavBar, Card, Badge, Btn, Divider } from "@/components/ui";
+import { authHeaders } from "@/lib/clientAuth";
 
 export default function FarmerProduceDetail({ produce, onBack, onEdit, showToast, onUpdate }) {
   const [available, setAvailable] = useState(produce.available);
@@ -12,7 +13,7 @@ export default function FarmerProduceDetail({ produce, onBack, onEdit, showToast
       const id = produce._id || produce.id;
       const res = await fetch(`/api/produce/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ available: !available })
       });
       if (!res.ok) throw new Error();

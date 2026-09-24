@@ -4,11 +4,12 @@ import { NavBar, Btn, FormGroup, Input, Select, Badge } from "@/components/ui";
 
 const ALL_CROPS = ["Vegetables", "Fruits", "Grains", "Pulses", "Dairy", "Herbs", "Spices", "Roots"];
 
-export default function AddFarmerScreen({ onSave, onBack, showToast }) {
+export default function AddFarmerScreen({ onSave, onBack, showToast, prefillPhone }) {
   const [form, setForm] = useState({
-    name: "", village: "", district: "", state: "Karnataka", phone: "", crops: []
+    name: "", village: "", district: "", state: "Karnataka", phone: prefillPhone || "", crops: []
   });
   const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -32,14 +33,37 @@ export default function AddFarmerScreen({ onSave, onBack, showToast }) {
       });
       if (!res.ok) throw new Error();
       const farmer = await res.json();
-      showToast?.("✓ Farmer registered!");
-      onSave?.(farmer);
+      setSubmitted(true); // Show pending approval screen
     } catch {
       showToast?.("Failed to register farmer", "error");
     } finally {
       setSaving(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--cream)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>⏳</div>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", color: "var(--brown)", fontSize: 24, marginBottom: 12 }}>
+          Registration Submitted!
+        </h2>
+        <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.7, maxWidth: 280, marginBottom: 24 }}>
+          Your farmer registration is under review. Our admin team will approve your account within 24 hours.
+          You will be able to list produce once approved.
+        </p>
+        <div style={{ background: "var(--gs)", borderRadius: "var(--r)", padding: "14px 20px", marginBottom: 24, width: "100%" }}>
+          <div style={{ fontWeight: 700, color: "var(--gd)", marginBottom: 4 }}>What happens next?</div>
+          <div style={{ fontSize: 13, color: "var(--brown)", lineHeight: 1.7 }}>
+            📞 Admin will verify your details<br />
+            ✅ Account approved within 24 hours<br />
+            🌾 Start listing your produce
+          </div>
+        </div>
+        <Btn block onClick={onBack}>Back to Home</Btn>
+      </div>
+    );
+  }
 
   return (
     <div style={{ paddingBottom: 100 }}>
